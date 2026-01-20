@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "readline/readline.h"
 #include "parse_input.h"
+#include "child_process.h"
 int main(void)
 {
     int cpid;
