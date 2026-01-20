@@ -16,6 +16,6 @@ typedef struct process {
     bool pipe_arg_2;
 } process;
 
-int execOneChild(process* proc); // returns cpid of the child process
+int execOneChild(process* proc, int pipe_forwarding[]); // returns cpid of the child process
 
 #endif /* CHILD_PROCESS_H */

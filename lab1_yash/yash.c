@@ -14,6 +14,7 @@ int main(void)
     	// 0. Register signal handlers
 
     	// 1. Print the prompt (#)
+        //printf("# ");
 
     	// 2. Grab and parse the input - NOTE: Make sure to remove the newline
     	// character from the input string (otherwise, you'll pass "ls\n" to
@@ -34,11 +35,8 @@ int main(void)
             printf("\n"); // print newline for invalid input
             continue; // empty input, prompt again
         }
-
-        cpid = fork();
-        if (cpid == 0){
-            // Handle the child process
-        }
+        // printf("Command entered: %s\n", command);
+        // cpid = execOneChild(NULL);
 
         
 
@@ -47,6 +45,9 @@ int main(void)
 
     	// 6. NOTE: There are other steps for job related stuff but good luck
     	// we won't spell it out for you
+        printf("\n");
+        free(read_string);
+        free(parsed_input);
 	}
 
 	return 0;

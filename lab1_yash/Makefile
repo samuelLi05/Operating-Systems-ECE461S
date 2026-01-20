@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -g -D_POSIX_C_SOURCE=200809L
+CFLAGS = -std=c11 -D_POSIX_C_SOURCE=200809L
 LDFLAGS = -lreadline -lncurses
 
 SRCS = yash.c parse_input.c child_process.c

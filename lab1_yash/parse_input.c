@@ -76,6 +76,7 @@ int find_redir_index(char **parsed_input, int* type) {
     return -1; // not found
 }
 
+// Finds all indices of redirection characters in the parsed input array
 int* find_all_redir_indices(char **parsed_input, int* types, int* count) {
     if (parsed_input == NULL || types == NULL || count == NULL) {
         return NULL;
@@ -112,4 +113,17 @@ int* find_all_redir_indices(char **parsed_input, int* types, int* count) {
     }
 
     return indices;
+}
+
+// Finds the index of the background token '&' in the parsed input array
+int find_background_token(char **parsed_input) {
+    if (parsed_input == NULL) {
+        return -1;
+    }
+    for (int i = 0; parsed_input[i] != NULL; i++) {
+        if (strcmp(parsed_input[i], "&") == 0) {
+            return i;
+        }
+    }
+    return -1; // not found
 }
