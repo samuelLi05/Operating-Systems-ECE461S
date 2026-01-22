@@ -12,10 +12,13 @@ typedef struct process {
     char* out_file;
     char* in_file;
     char* err_file;
-    bool pipe_arg_1;
-    bool pipe_arg_2;
 } process;
 
-int execOneChild(process* proc, int pipe_forwarding[]); // returns cpid of the child process
+int execOneChild(process* proc); // returns cpid of the child process
+
+void exeecTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2); // creates two children processes connected by a pipe
+
+void get_fd(process* proc, int* open_fd, int* in_fd, int* err_fd); // returns the file descriptor for redirection, -1 if none
+
 
 #endif /* CHILD_PROCESS_H */
