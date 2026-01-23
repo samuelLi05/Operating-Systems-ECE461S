@@ -32,7 +32,7 @@ int execOneChild(process* proc) {
 }
 
 // creates two children processes connected by a pipe
-void exeecTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
+void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
     // Create a pipe
     int pipe_fd[2];
     pipe(pipe_fd);

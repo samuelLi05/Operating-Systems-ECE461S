@@ -10,6 +10,7 @@ int main(void)
     char* read_string;
     char** parsed_input;
     char* command;
+    int parsed_input_length;
     while (1) {
     	// 0. Register signal handlers
 
@@ -21,6 +22,8 @@ int main(void)
     	// execvp and there is no executable called "ln\n" just "ls")
         read_string = readline("# "); 
         parsed_input = string_parser(read_string);
+
+        parsed_input_length = sizeof(parsed_input) / sizeof(parsed_input[0]);
 
     	// 3. Check for job control tokens (fg, bg, jobs, &) (for now just
     	// ignore those commands)
@@ -35,11 +38,22 @@ int main(void)
             printf("\n"); // print newline for invalid input
             continue; // empty input, prompt again
         }
-        // printf("Command entered: %s\n", command);
-        // cpid = execOneChild(NULL);
+        // printf("Command entered: %s\n", command); // test simple parsing
 
+        // find the pipe index if it exists
+        int pipe_index = find_pipe_index(parsed_input);
+        if (pipe_index == -1) {
+            // single process
+            process* proc = construct_process(parsed_input, 0, parsed_input_length);
+            cpid = execOneChild(proc);
+        } else{
+            // two processes connected by a pipe
+            process* proc1 = construct_process(parsed_input, 0, pipe_index);
+            process* proc2 = construct_process(parsed_input, pipe_index + 1, parsed_input_length);
+            int cpid1, cpid2;
+            execTwoChildren(proc1, proc2, &cpid1, &cpid2);
+        }
         
-
     	// 5. Execute the commands using execvp or execlp - e.g. execOneChild()
     	// or execTwoChildren()
 

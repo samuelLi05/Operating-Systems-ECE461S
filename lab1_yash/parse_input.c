@@ -57,14 +57,14 @@ int find_pipe_index(char **parsed_input) {
 }
 
 // Finds the index of redirection characters in the parsed input array. type should be a redirection character like "<", ">", or ">>"
-int find_redir_index(char **parsed_input, char* type) {
+int find_redir_index(char **parsed_input, char* type, int start, int end) {
     if (parsed_input == NULL) {
         return -1;
     }
     if (strcmp(type, "<") != 0 && strcmp(type, ">") != 0 && strcmp(type, ">>") != 0) {
         return -1; // invalid type
     }
-    for (int i = 0; parsed_input[i] != NULL; i++) {
+    for (int i = start; i < end; i++) {
         if (strcmp(parsed_input[i], type) == 0) {
            return i;
         }
@@ -142,9 +142,9 @@ process* construct_process(char** parsed_input, int start_index, int end_index) 
     }
 
     // find redirection indices to set corresponsing file names
-    int in_redir_index = find_redir_index(parsed_input, "<");
-    int out_redir_index = find_redir_index(parsed_input, ">");
-    int err_redir_index = find_redir_index(parsed_input, ">>");
+    int in_redir_index = find_redir_index(parsed_input, "<", start_index, end_index);
+    int out_redir_index = find_redir_index(parsed_input, ">", start_index, end_index);
+    int err_redir_index = find_redir_index(parsed_input, ">>", start_index, end_index);
 
     if (in_redir_index != -1 && in_redir_index > start_index && in_redir_index < end_index - 1) {
         in_file = parsed_input[in_redir_index + 1];
@@ -156,8 +156,25 @@ process* construct_process(char** parsed_input, int start_index, int end_index) 
         err_file = parsed_input[err_redir_index + 1];
     }
 
+    // find the smalles redirection index that is not negative
+    int first_redir_index = end_index;
+    if (in_redir_index != -1 && in_redir_index > start_index && in_redir_index < first_redir_index) {
+        first_redir_index = in_redir_index;
+    }
+    if (out_redir_index != -1 && out_redir_index > start_index && out_redir_index < first_redir_index) {
+        first_redir_index = out_redir_index;
+    }
+    if (err_redir_index != -1 && err_redir_index > start_index && err_redir_index < first_redir_index) {
+        first_redir_index = err_redir_index;
+    }
+
+    // get all command arguments before the first redirection
+    parsed_input[first_redir_index] = NULL; // null terminate to just leave the commands
+    proc->argv = &parsed_input[start_index];
+
     // set the process struct fields
     proc->in_file = in_file;
     proc->out_file = out_file;
     proc->err_file = err_file;
+    return proc;
 }

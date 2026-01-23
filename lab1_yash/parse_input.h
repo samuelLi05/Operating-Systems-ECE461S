@@ -11,7 +11,7 @@ char **string_parser(char* input_string);
 
 int find_pipe_index(char** parsed_input);
 
-int find_redir_index(char **parsed_input, char* type);
+int find_redir_index(char **parsed_input, char* type, int start_index, int end_index);
 
 // int* find_all_redir_indices(char **parsed_input, int* types, int* count);
 
