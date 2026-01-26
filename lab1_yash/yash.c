@@ -21,9 +21,7 @@ int main(void)
     	// character from the input string (otherwise, you'll pass "ls\n" to
     	// execvp and there is no executable called "ln\n" just "ls")
         read_string = readline("# "); 
-        parsed_input = string_parser(read_string);
-
-        parsed_input_length = sizeof(parsed_input) / sizeof(parsed_input[0]);
+        parsed_input = string_parser(read_string, &parsed_input_length);
 
     	// 3. Check for job control tokens (fg, bg, jobs, &) (for now just
     	// ignore those commands)
@@ -46,12 +44,18 @@ int main(void)
             // single process
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
+            free(proc->argv);
+            free(proc);
         } else{
             // two processes connected by a pipe
             process* proc1 = construct_process(parsed_input, 0, pipe_index);
             process* proc2 = construct_process(parsed_input, pipe_index + 1, parsed_input_length);
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
+            free(proc1->argv);
+            free(proc1);
+            free(proc2->argv);
+            free(proc2);
         }
         
     	// 5. Execute the commands using execvp or execlp - e.g. execOneChild()

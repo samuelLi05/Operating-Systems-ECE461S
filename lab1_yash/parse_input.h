@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include "child_process.h"
 
-char **string_parser(char* input_string);
+char **string_parser(char* input_string, int* parsed_length);
 
 int find_pipe_index(char** parsed_input);
 

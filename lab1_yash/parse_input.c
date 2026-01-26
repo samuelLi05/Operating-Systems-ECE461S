@@ -5,7 +5,7 @@
 #include "parse_input.h"
 // Parses the input string into an array of strings (tokens) split by spaces
 // Returns a NULL-terminated array of strings
-char** string_parser(char* input_string)
+char** string_parser(char* input_string, int* parsed_length)
 {
     if (input_string == NULL) {
         return NULL;
@@ -40,6 +40,7 @@ char** string_parser(char* input_string)
         i = strtok_r(NULL, " \t\n\r\v\f", &save_ptr);
     }
     string_array[index] = NULL; // null terminate the array
+    *parsed_length = index;
     return string_array;
 }
 
@@ -169,8 +170,16 @@ process* construct_process(char** parsed_input, int start_index, int end_index) 
     }
 
     // get all command arguments before the first redirection
-    parsed_input[first_redir_index] = NULL; // null terminate to just leave the commands
-    proc->argv = &parsed_input[start_index];
+    int argc = first_redir_index - start_index;
+    proc->argv = malloc((argc + 1) * sizeof(char*));
+    if (proc->argv == NULL) {
+        free(proc);
+        return NULL;
+    }
+    for (int i = 0; i < argc; i++) {
+        proc->argv[i] = parsed_input[start_index + i];
+    }
+    proc->argv[argc] = NULL; // null terminate the argv array
 
     // set the process struct fields
     proc->in_file = in_file;
