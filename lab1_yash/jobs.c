@@ -3,6 +3,8 @@
 #include <string.h>
 #include "jobs.h"
 
+job* jobs_list[20] = {NULL}; // intilize to null ie no present jobs
+
 void add_job(int pgid, int status, char* job_name) {
 	for (int i = 0; i < 20; ++i) {
 		if (jobs_list[i] == NULL) {

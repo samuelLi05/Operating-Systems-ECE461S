@@ -63,6 +63,7 @@ int main(void)
             // single process
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
+            add_job(cpid, RUNNING, command);
             waitForChild(cpid, background);
             free(proc->argv);
             free(proc);
@@ -72,6 +73,7 @@ int main(void)
             process* proc2 = construct_process(parsed_input, pipe_index + 1, parsed_input_length);
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
+            add_job(cpid1, RUNNING, command);
             waitForChild(cpid1, 0); // always foreground for piped commands
             free(proc1->argv);
             free(proc1);

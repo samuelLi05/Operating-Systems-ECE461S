@@ -12,7 +12,12 @@ typedef struct job {
     char* job_name;
 } job;
 
-job* jobs_list[20]; // max number of jobs running at a time is 20
+enum job_status {
+    RUNNING = 1, 
+    STOPPED = 2, 
+};
+
+extern job* jobs_list[20]; // max number of jobs running at a time is 20
 
 void add_job(int pgid, int status, char* job_name); 
 
