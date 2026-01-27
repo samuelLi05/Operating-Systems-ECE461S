@@ -20,5 +20,6 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2); //
 
 void get_fd(process* proc, int* open_fd, int* in_fd, int* err_fd); // returns the file descriptor for redirection, -1 if none
 
+int waitForChild(int cpid, int background); // waits for the child process to finish if foreground
 
 #endif /* CHILD_PROCESS_H */

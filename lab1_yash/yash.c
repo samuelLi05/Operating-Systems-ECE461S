@@ -1,9 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "readline/readline.h"
 #include "parse_input.h"
 #include "child_process.h"
+#include "signal_handler.h"
+
 int main(void)
 {
     int cpid;
@@ -11,6 +17,11 @@ int main(void)
     char** parsed_input;
     char* command;
     int parsed_input_length;
+    int background;
+
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+    signal(SIGCHLD, sig_handler);
     while (1) {
     	// 0. Register signal handlers
 
@@ -25,10 +36,6 @@ int main(void)
 
     	// 3. Check for job control tokens (fg, bg, jobs, &) (for now just
     	// ignore those commands)
-
-    	// 4. Determine the number of children processes to create (number of
-    	// times to call fork) (call fork once per child) (right now this will
-    	// just be one)
         command = parsed_input[0];
         if (command == NULL) {
             free(read_string);
@@ -38,12 +45,24 @@ int main(void)
         }
         // printf("Command entered: %s\n", command); // test simple parsing
 
+        if (find_background_token(parsed_input) != -1) {
+            background = 1;
+        } else {
+            background = 0;
+        }
+
+        
+    	// 4. Determine the number of children processes to create (number of
+    	// times to call fork) (call fork once per child) (right now this will
+    	// just be one)
+
         // find the pipe index if it exists
         int pipe_index = find_pipe_index(parsed_input);
         if (pipe_index == -1) {
             // single process
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
+            waitForChild(cpid, background);
             free(proc->argv);
             free(proc);
         } else{
@@ -52,6 +71,7 @@ int main(void)
             process* proc2 = construct_process(parsed_input, pipe_index + 1, parsed_input_length);
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
+            waitForChild(cpid1, 0); // always foreground for piped commands
             free(proc1->argv);
             free(proc1);
             free(proc2->argv);
