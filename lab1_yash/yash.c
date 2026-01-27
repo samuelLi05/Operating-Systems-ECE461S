@@ -9,6 +9,7 @@
 #include "parse_input.h"
 #include "child_process.h"
 #include "signal_handler.h"
+#include "jobs.h"
 
 int main(void)
 {
