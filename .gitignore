@@ -1,3 +1,5 @@
 /misc
 *.o
 yash
+*.txt
+*.vscode
