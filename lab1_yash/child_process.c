@@ -18,7 +18,7 @@ int execOneChild(process* proc) {
     if (cpid == 0) {
         // In child process
         // handle redirections here using proc->in_file, proc->out_file, proc->err_file
-        pgid = setpgid(0, 0); // set the child process group ID to its own PID
+        setpgid(0, 0); // set the child process group ID to its own PID
         if (proc->in_file != NULL) dup2(in_fd, STDIN_FILENO);
         if (proc->out_file != NULL) dup2(out_fd, STDOUT_FILENO);
         if (proc->err_file != NULL) dup2(err_fd, STDERR_FILENO);
@@ -51,7 +51,7 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
     *cpid1 = fork();
     if (*cpid1 == 0) {
         // In first child process
-        pgid = setpgid(0, 0); // set the child process group ID to its own PID
+        setpgid(0, 0); // set the child process group ID to its own PID
         if (proc1->out_file != NULL) dup2(open_fd1, STDOUT_FILENO);
         if (proc1->in_file != NULL) dup2(in_fd1, STDIN_FILENO);
         if (proc1->err_file != NULL) dup2(err_fd1, STDERR_FILENO);
@@ -65,7 +65,7 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
     *cpid2 = fork();
     if (*cpid2 == 0) {
         // In second child process
-        setpgid(0, pgid); // set the second child process group ID to the first child's PID
+        setpgid(0, *cpid1); // set the second child process group ID to the first child's PID
         if (proc2->out_file != NULL) dup2(open_fd2, STDOUT_FILENO);
         if (proc2->in_file != NULL) dup2(in_fd2, STDIN_FILENO);
         if (proc2->err_file != NULL) dup2(err_fd2, STDERR_FILENO);

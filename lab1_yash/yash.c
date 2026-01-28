@@ -60,6 +60,9 @@ int main(void)
     	// times to call fork) (call fork once per child) (right now this will
     	// just be one)
 
+        // 5. Execute the commands using execvp or execlp - e.g. execOneChild()
+    	// or execTwoChildren()
+
         // find the pipe index if it exists
         int pipe_index = find_pipe_index(parsed_input);
         if (pipe_index == -1) {
@@ -67,7 +70,13 @@ int main(void)
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
             add_job(cpid, RUNNING, foreground, read_string);
-            waitForChild(cpid, background);
+            if (background == 0 && foreground == 1) {
+                tcsetpgrp(STDIN_FILENO, cpid);
+                waitForChild(cpid, background);
+                tcsetpgrp(STDIN_FILENO, getpgrp());
+            } else {
+                waitForChild(cpid, background);
+            }
             free(proc->argv);
             free(proc);
         } else{
@@ -77,19 +86,22 @@ int main(void)
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
             add_job(cpid1, RUNNING, foreground, read_string);
-            waitForChild(cpid1, 0); // always foreground for piped commands
+            if (background == 0 && foreground == 1) {
+                tcsetpgrp(STDIN_FILENO, cpid1);
+                waitForChild(cpid1, 0); // always foreground for piped commands
+                tcsetpgrp(STDIN_FILENO, getpgrp());
+            } else {
+                waitForChild(cpid1, 0); // always foreground for piped commands
+            }
             free(proc1->argv);
             free(proc1);
             free(proc2->argv);
             free(proc2);
         }
-        
-    	// 5. Execute the commands using execvp or execlp - e.g. execOneChild()
-    	// or execTwoChildren()
 
     	// 6. NOTE: There are other steps for job related stuff but good luck
     	// we won't spell it out for you
-        printf("\n");
+        // printf("\n");
         free(read_string);
         free(parsed_input);
 	}

@@ -6,6 +6,7 @@
 #define CHILD_PROCESS_H
 
 #include <stdbool.h>
+#include <unistd.h>
 
 typedef struct process {
     char** argv;
