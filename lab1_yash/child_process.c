@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <signal.h>
 #include "child_process.h"
 
 int execOneChild(process* proc) {
@@ -17,6 +18,9 @@ int execOneChild(process* proc) {
 
     if (cpid == 0) {
         // In child process
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
         // handle redirections here using proc->in_file, proc->out_file, proc->err_file
         setpgid(0, 0); // set the child process group ID to its own PID
         if (proc->in_file != NULL) dup2(in_fd, STDIN_FILENO);
@@ -28,6 +32,7 @@ int execOneChild(process* proc) {
         if (ret == -1) exit(-1);
     }
     // in parent process
+    setpgid(cpid, cpid);
     if (proc->in_file != NULL) close(in_fd);
     if (proc->out_file != NULL) close(out_fd);
     if (proc->err_file != NULL) close(err_fd);
@@ -51,6 +56,9 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
     *cpid1 = fork();
     if (*cpid1 == 0) {
         // In first child process
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
         setpgid(0, 0); // set the child process group ID to its own PID
         if (proc1->out_file != NULL) dup2(open_fd1, STDOUT_FILENO);
         if (proc1->in_file != NULL) dup2(in_fd1, STDIN_FILENO);
@@ -61,11 +69,15 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
         execvp(proc1->argv[0], proc1->argv);
         exit(-1);
     }
+    setpgid(*cpid1, *cpid1);
 
     *cpid2 = fork();
     if (*cpid2 == 0) {
         // In second child process
         setpgid(0, *cpid1); // set the second child process group ID to the first child's PID
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
         if (proc2->out_file != NULL) dup2(open_fd2, STDOUT_FILENO);
         if (proc2->in_file != NULL) dup2(in_fd2, STDIN_FILENO);
         if (proc2->err_file != NULL) dup2(err_fd2, STDERR_FILENO);
@@ -76,6 +88,7 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
         execvp(proc2->argv[0], proc2->argv);
         exit(-1);
     }
+    setpgid(*cpid2, *cpid1);
 
     close(pipe_fd[0]); // Close read end in parent
     close(pipe_fd[1]); // Close write end in parent
