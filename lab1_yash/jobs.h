@@ -16,6 +16,7 @@ typedef struct job {
 enum job_status {
     RUNNING = 1, 
     STOPPED = 2, 
+    DONE = 3
 };
 
 extern job* jobs_list[20]; // max number of jobs running at a time is 20
@@ -38,5 +39,7 @@ int get_largest_job_id(); // get the largest job id currently in jobs list
 void get_current_job();
 
 void get_recent_stopped_job();
+
+job* find_job_by_pgid(int pgid);
 
 #endif

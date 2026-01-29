@@ -13,7 +13,7 @@ void sig_handler(int signo) {
     if (signo == SIGCHLD) { // other signals are set as default execution behavior
         while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
             for (int i = 0; i < 20; i++) {
-                if (jobs_list[i] != NULL && jobs_list[i]->pgid == pid) {
+                if (jobs_list[i] != NULL && jobs_list[i]->pgid == pid) { // upon process creation process group numbers are set to the child's pid
                     if (WIFEXITED(status) || WIFSIGNALED(status))
                     {
                         remove_job(jobs_list[i]->job_id); // remove the job if exited or terminated from receipt signal not caught

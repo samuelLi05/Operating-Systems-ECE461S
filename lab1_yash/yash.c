@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "readline/readline.h"
 #include "parse_input.h"
 #include "child_process.h"
@@ -110,10 +111,24 @@ int main(void)
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
             add_job(cpid, RUNNING, foreground, read_string);
-            if (background == 0 && foreground == 1) {
+            if (background == 0 && foreground == 1)
+            {
                 tcsetpgrp(STDIN_FILENO, cpid);
-                waitForChild(cpid, background);
+                int status = waitForChild(cpid, background);
                 tcsetpgrp(STDIN_FILENO, shell_pgid);
+                job* finished_job = find_job_by_pgid(cpid);
+                if (finished_job != NULL)
+                {
+                    if (WIFEXITED(status) || WIFSIGNALED(status))
+                    {
+                        remove_job(finished_job->job_id);
+                    } else if (WIFSTOPPED(status))
+                    {
+                        finished_job->status = STOPPED;
+                        set_job_background(cpid);
+                        current_stopped_job = finished_job;
+                    }
+                }
             } else {
                 waitForChild(cpid, background);
             }
@@ -126,10 +141,25 @@ int main(void)
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
             add_job(cpid1, RUNNING, foreground, read_string);
-            if (background == 0 && foreground == 1) {
+            if (background == 0 && foreground == 1)
+            {
                 tcsetpgrp(STDIN_FILENO, cpid1);
-                waitForChild(cpid1, 0); // always foreground for piped commands
+                int status = waitForChild(cpid1, 0); // always foreground for piped commands
                 tcsetpgrp(STDIN_FILENO, shell_pgid);
+
+                job* finished_job = find_job_by_pgid(cpid1);
+                if (finished_job != NULL)
+                {
+                    if (WIFEXITED(status) || WIFSIGNALED(status))
+                    {
+                        remove_job(finished_job->job_id);
+                    } else if (WIFSTOPPED(status))
+                    {
+                        finished_job->status = STOPPED;
+                        set_job_background(cpid1);
+                        current_stopped_job = finished_job;
+                    }
+                }
             } else {
                 waitForChild(cpid1, 0); // always foreground for piped commands
             }

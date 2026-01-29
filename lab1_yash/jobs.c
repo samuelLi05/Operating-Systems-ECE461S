@@ -34,18 +34,19 @@ void add_job(int pgid, int status, int fg, char* job_name) { // add job to array
 void remove_job(int job_id) {
 	for (int i = 0; i < 20; i++) {
 		if (jobs_list[i] && jobs_list[i]->job_id == job_id) {
-			free(jobs_list[i]->job_name);
-			free(jobs_list[i]);
-			if (current_foreground_job == jobs_list[i]) {
+			job* job_to_remove = jobs_list[i];
+			if (current_foreground_job == job_to_remove) {
 				current_foreground_job = NULL;
 			}
-			if (current_job == jobs_list[i])
+			if (current_job == job_to_remove)
 			{
 				current_job = NULL;
 			}
-			if (current_stopped_job == jobs_list[i]) {
+			if (current_stopped_job == job_to_remove) {
 				current_stopped_job = NULL;
 			}	
+			free(job_to_remove->job_name);
+			free(job_to_remove);
 			jobs_list[i] = NULL;
 			return;
 		}
@@ -134,4 +135,14 @@ void get_recent_stopped_job() {
 		}
 	}
 	current_stopped_job = NULL;
+}
+
+// get the job by the pgid
+job* find_job_by_pgid(int pgid) {
+	for (int i = 0; i < 20; i++) {
+		if (jobs_list[i] != NULL && jobs_list[i]->pgid == pgid) {
+			return jobs_list[i];
+		}
+	}
+	return NULL;
 }
