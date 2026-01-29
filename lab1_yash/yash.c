@@ -75,11 +75,13 @@ int main(void)
             continue;
         } else if (strcmp(command, "fg") == 0) {
             get_current_job();
+            // send kill command SIGCONT to most recent job
             free(read_string);
             free(parsed_input);
             continue;
         } else if (strcmp(command, "bg") == 0) {
-            get_current_job();
+            get_recent_stopped_job();
+            // send kill command SIGCONT to most stopped job
             free(read_string);
             free(parsed_input);
             continue;

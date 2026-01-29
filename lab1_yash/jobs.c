@@ -6,6 +6,7 @@
 job* jobs_list[20] = {NULL}; // intilize to null ie no present jobs
 job* current_foreground_job = NULL; // track current foreground job
 job* current_job = NULL; // track the most recent job
+job* current_stopped_job = NULL; // track the most recent stopped job
 
 void add_job(int pgid, int status, int fg, char* job_name) { // add job to array of 20 jobs
 	int largest_id = get_largest_job_id();
@@ -42,6 +43,9 @@ void remove_job(int job_id) {
 			{
 				current_job = NULL;
 			}
+			if (current_stopped_job == jobs_list[i]) {
+				current_stopped_job = NULL;
+			}	
 			jobs_list[i] = NULL;
 			return;
 		}
@@ -119,4 +123,15 @@ void get_current_job() {
 		}
 	}
 	current_job = NULL;
+}
+
+// get the most recent stopped job added to jobs list
+void get_recent_stopped_job() {
+	for (int i = 19; i >= 0; i--) {
+		if (jobs_list[i] != NULL && jobs_list[i]->status == STOPPED) {
+			current_stopped_job = jobs_list[i];
+			return;
+		}
+	}
+	current_stopped_job = NULL;
 }
