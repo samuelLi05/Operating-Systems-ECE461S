@@ -42,4 +42,10 @@ void get_recent_stopped_job();
 
 job* find_job_by_pgid(int pgid);
 
+void free_jobs_list(); // free all jobs in the jobs list
+
+void add_bg_token_to_job_name(job* j); // add & token to job name for background jobs
+
+void remove_bg_token_from_job_name(job* j); // remove & token from job name for foreground jobs
+
 #endif

@@ -20,7 +20,7 @@ $(TARGET): $(OBJS)
 yash.o: yash.c parse_input.h child_process.h signal_handler.h jobs.h
 parse_input.o: parse_input.c parse_input.h
 child_process.o: child_process.c child_process.h
-signal_handler.o: signal_handler.c signal_handler.h
+signal_handler.o: signal_handler.c signal_handler.h jobs.h
 jobs.o: jobs.c jobs.h
 
 clean:

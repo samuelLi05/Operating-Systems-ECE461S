@@ -17,6 +17,7 @@ int main(void)
     int cpid;
     char* read_string;
     char** parsed_input;
+    char* saved_string;
     char* command;
     int parsed_input_length;
     int background;
@@ -54,14 +55,21 @@ int main(void)
     	// execvp and there is no executable called "ln\n" just "ls")
         read_string = readline("# ");
         if (read_string == NULL) {
+            // free the jobs list before exiting
+            free_jobs_list();
+            free(read_string);
             printf("\n");
             break;
         }
+        saved_string = strdup(read_string); // save a copy for job name
         parsed_input = string_parser(read_string, &parsed_input_length);
         if (parsed_input == NULL) {
             free(read_string);
+            free(saved_string);
+            free(parsed_input);
             continue;
         }
+        
 
     	// 3. Check for job control tokens (fg, bg, jobs, &) (for now just
     	// ignore those commands)
@@ -82,6 +90,7 @@ int main(void)
         command = parsed_input[0];
         if (command == NULL) {
             free(read_string);
+            free(saved_string);
             free(parsed_input);
             printf("\n"); // print newline for invalid input
             continue; // empty input, prompt again
@@ -92,16 +101,20 @@ int main(void)
         if (strcmp(command, "jobs") == 0) {
             output_jobs_list();
             free(read_string);
+            free(saved_string);
             free(parsed_input);
             continue;
         } else if (strcmp(command, "fg") == 0) {
             get_current_job();
             if (current_job == NULL) {
                 free(read_string);
+                free(saved_string);
                 free(parsed_input);
                 continue;
             }
-
+            // output the command to console as if it was run normally in foreground, remove the & symbol if it was present for printing
+            remove_bg_token_from_job_name(current_job);
+            printf("%s\n", current_job->job_name);
             // Move job to foreground: give it terminal, continue it, then wait.
             set_job_foreground(current_job->pgid);
             tcsetpgrp(STDIN_FILENO, current_job->pgid);
@@ -124,12 +137,14 @@ int main(void)
                 }
             }
             free(read_string);
+            free(saved_string);
             free(parsed_input);
             continue;
         } else if (strcmp(command, "bg") == 0) {
             get_recent_stopped_job();
             if (current_stopped_job == NULL) {
                 free(read_string);
+                free(saved_string);
                 free(parsed_input);
                 continue;
             }
@@ -137,7 +152,10 @@ int main(void)
             current_stopped_job->status = RUNNING;
             set_job_background(current_stopped_job->pgid);
             kill(-current_stopped_job->pgid, SIGCONT);
+            add_bg_token_to_job_name(current_stopped_job);
+            printf("[%d]%c  %s\t%s\n", current_stopped_job->job_id, '+', "Running", current_stopped_job->job_name);
             free(read_string);
+            free(saved_string);
             free(parsed_input);
             continue;
         }
@@ -155,7 +173,7 @@ int main(void)
             // single process
             process* proc = construct_process(parsed_input, 0, parsed_input_length);
             cpid = execOneChild(proc);
-            add_job(cpid, RUNNING, foreground, read_string);
+            add_job(cpid, RUNNING, foreground, saved_string);
             if (background == 0 && foreground == 1)
             {
                 tcsetpgrp(STDIN_FILENO, cpid);
@@ -185,7 +203,7 @@ int main(void)
             process* proc2 = construct_process(parsed_input, pipe_index + 1, parsed_input_length);
             int cpid1, cpid2;
             execTwoChildren(proc1, proc2, &cpid1, &cpid2);
-            add_job(cpid1, RUNNING, foreground, read_string);
+            add_job(cpid1, RUNNING, foreground, saved_string);
             if (background == 0 && foreground == 1)
             {
                 tcsetpgrp(STDIN_FILENO, cpid1);
@@ -218,6 +236,7 @@ int main(void)
     	// we won't spell it out for you
         // printf("\n");
         free(read_string);
+        free(saved_string);
         free(parsed_input);
 	}
 

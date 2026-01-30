@@ -152,3 +152,33 @@ job* find_job_by_pgid(int pgid) {
 	}
 	return NULL;
 }
+
+// free all jobs in the jobs list
+void free_jobs_list()
+{
+	for (int i = 0; i < 20; i++) {
+		if (jobs_list[i] != NULL) {
+			free(jobs_list[i]->job_name);
+			free(jobs_list[i]);
+			jobs_list[i] = NULL;
+		}
+	}
+}
+
+// add & token to job name for background jobs
+void add_bg_token_to_job_name(job* j)
+{
+	if (strchr(j->job_name, '&') != NULL) {
+		return; // & already present
+	}
+	strcat(j->job_name, " &");
+}
+
+// remove & token from job name for foreground jobs
+void remove_bg_token_from_job_name(job* j)
+{
+	char* ampersand_pos = strchr(j->job_name, '&');
+	if (ampersand_pos != NULL) {
+		*(ampersand_pos - 1) = '\0'; // remove space before &
+	}
+}
