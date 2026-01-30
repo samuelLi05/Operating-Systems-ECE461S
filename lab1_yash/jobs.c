@@ -55,6 +55,7 @@ void remove_job(int job_id) {
 
 // output the current jobs in the jobs list
 void output_jobs_list() {
+	int deletion_index = -1;
 	for (int i = 0; i < 20; i++)
 	{
 		char curr = '-';
@@ -64,14 +65,19 @@ void output_jobs_list() {
 				status_str = "Running";
 			} else if (jobs_list[i]->status == STOPPED) {
 				status_str = "Stopped";
-			} else {
-				status_str = "";
+			} else if (jobs_list[i]->status == DONE) {
+				status_str = "Done";
+				deletion_index = i; // mark for deletion after printing
 			}
 			if (jobs_list[i] == current_job) {
 				curr = '+';
 			} 
 			printf("[%d]%c  %s\t%s\n", jobs_list[i]->job_id, curr, status_str, jobs_list[i]->job_name);
 		}
+	}
+	if (deletion_index != -1)
+	{
+		remove_job(jobs_list[deletion_index]->job_id);
 	}
 }
 

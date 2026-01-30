@@ -39,6 +39,12 @@ int main(void)
 
     while (1) {
     	// 0. Register signal handlers
+        signal(SIGINT, SIG_IGN);
+        signal(SIGTSTP, SIG_IGN);
+        signal(SIGTTOU, SIG_IGN);
+        signal(SIGTTIN, SIG_IGN);
+        signal(SIGQUIT, SIG_IGN);
+        signal(SIGCHLD, sig_handler);
 
     	// 1. Print the prompt (#)
         //printf("# ");
@@ -59,6 +65,20 @@ int main(void)
 
     	// 3. Check for job control tokens (fg, bg, jobs, &) (for now just
     	// ignore those commands)
+
+        // filter the background command if it is present
+        if (find_background_token(parsed_input) != -1) {
+            background = 1;
+            foreground = 0;
+             // remove the & token from parsed input
+            parsed_input[parsed_input_length - 1] = NULL;
+            parsed_input_length--;
+        } else {
+            background = 0;
+            foreground = 1;
+        }
+
+
         command = parsed_input[0];
         if (command == NULL) {
             free(read_string);
@@ -76,26 +96,51 @@ int main(void)
             continue;
         } else if (strcmp(command, "fg") == 0) {
             get_current_job();
-            // send kill command SIGCONT to most recent job
+            if (current_job == NULL) {
+                free(read_string);
+                free(parsed_input);
+                continue;
+            }
+
+            // Move job to foreground: give it terminal, continue it, then wait.
+            set_job_foreground(current_job->pgid);
+            tcsetpgrp(STDIN_FILENO, current_job->pgid);
+            kill(-current_job->pgid, SIGCONT);
+
+            int status = waitForChild(current_job->pgid, 0);
+            tcsetpgrp(STDIN_FILENO, shell_pgid);
+
+            job* finished_job = find_job_by_pgid(current_job->pgid);
+            if (finished_job != NULL)
+            {
+                if (WIFEXITED(status) || WIFSIGNALED(status))
+                {
+                    remove_job(finished_job->job_id);
+                } else if (WIFSTOPPED(status))
+                {
+                    finished_job->status = STOPPED;
+                    set_job_background(finished_job->pgid);
+                    current_stopped_job = finished_job;
+                }
+            }
             free(read_string);
             free(parsed_input);
             continue;
         } else if (strcmp(command, "bg") == 0) {
             get_recent_stopped_job();
-            // send kill command SIGCONT to most stopped job
+            if (current_stopped_job == NULL) {
+                free(read_string);
+                free(parsed_input);
+                continue;
+            }
+            // Continue the most recent stopped job in the background.
+            current_stopped_job->status = RUNNING;
+            set_job_background(current_stopped_job->pgid);
+            kill(-current_stopped_job->pgid, SIGCONT);
             free(read_string);
             free(parsed_input);
             continue;
         }
-
-        if (find_background_token(parsed_input) != -1) {
-            background = 1;
-            foreground = 0;
-        } else {
-            background = 0;
-            foreground = 1;
-        }
-
         
     	// 4. Determine the number of children processes to create (number of
     	// times to call fork) (call fork once per child) (right now this will
@@ -144,7 +189,7 @@ int main(void)
             if (background == 0 && foreground == 1)
             {
                 tcsetpgrp(STDIN_FILENO, cpid1);
-                int status = waitForChild(cpid1, 0); // always foreground for piped commands
+                int status = waitForChild(cpid1, background); // always foreground for piped commands
                 tcsetpgrp(STDIN_FILENO, shell_pgid);
 
                 job* finished_job = find_job_by_pgid(cpid1);
@@ -161,7 +206,7 @@ int main(void)
                     }
                 }
             } else {
-                waitForChild(cpid1, 0); // always foreground for piped commands
+                waitForChild(cpid1, background); // always foreground for piped commands
             }
             free(proc1->argv);
             free(proc1);

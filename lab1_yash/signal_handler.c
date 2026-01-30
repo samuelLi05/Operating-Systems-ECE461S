@@ -16,7 +16,8 @@ void sig_handler(int signo) {
                 if (jobs_list[i] != NULL && jobs_list[i]->pgid == pid) { // upon process creation process group numbers are set to the child's pid
                     if (WIFEXITED(status) || WIFSIGNALED(status))
                     {
-                        remove_job(jobs_list[i]->job_id); // remove the job if exited or terminated from receipt signal not caught
+                        jobs_list[i]->status = DONE; // 3 for done
+                        ///remove_job(jobs_list[i]->job_id); // remove the job if exited or terminated from receipt signal not caught
                     } else if (WIFSTOPPED(status))
                     {
                         jobs_list[i]->status = STOPPED; // 2 for stopped

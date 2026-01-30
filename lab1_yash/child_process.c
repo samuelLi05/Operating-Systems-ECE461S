@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include "child_process.h"
+#include "signal_handler.h"
 
 int execOneChild(process* proc) {
     int out_fd;
@@ -20,7 +21,7 @@ int execOneChild(process* proc) {
         // In child process
         signal(SIGINT, SIG_DFL);
         signal(SIGTSTP, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);
+        signal(SIGCHLD, sig_handler);
         // handle redirections here using proc->in_file, proc->out_file, proc->err_file
         setpgid(0, 0); // set the child process group ID to its own PID
         if (proc->in_file != NULL) dup2(in_fd, STDIN_FILENO);
@@ -58,7 +59,7 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
         // In first child process
         signal(SIGINT, SIG_DFL);
         signal(SIGTSTP, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);
+        signal(SIGCHLD, sig_handler);
         setpgid(0, 0); // set the child process group ID to its own PID
         if (proc1->out_file != NULL) dup2(open_fd1, STDOUT_FILENO);
         if (proc1->in_file != NULL) dup2(in_fd1, STDIN_FILENO);
@@ -77,7 +78,7 @@ void execTwoChildren(process* proc1, process* proc2, int* cpid1, int* cpid2) {
         setpgid(0, *cpid1); // set the second child process group ID to the first child's PID
         signal(SIGINT, SIG_DFL);
         signal(SIGTSTP, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);
+        signal(SIGCHLD, sig_handler);
         if (proc2->out_file != NULL) dup2(open_fd2, STDOUT_FILENO);
         if (proc2->in_file != NULL) dup2(in_fd2, STDIN_FILENO);
         if (proc2->err_file != NULL) dup2(err_fd2, STDERR_FILENO);
