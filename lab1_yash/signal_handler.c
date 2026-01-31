@@ -17,7 +17,9 @@ void sig_handler(int signo) {
                     if (WIFEXITED(status) || WIFSIGNALED(status))
                     {
                         jobs_list[i]->status = DONE; // 3 for done
-                        ///remove_job(jobs_list[i]->job_id); // remove the job if exited or terminated from receipt signal not caught
+                        char curr = (jobs_list[i] == current_job) ? '+' : '-';
+                        printf("\n[%d]%c  %s\t%s", jobs_list[i]->job_id, curr, "Done", jobs_list[i]->job_name);
+                        remove_job(jobs_list[i]->job_id); // remove the job if exited or terminated from receipt signal not caught
                     } else if (WIFSTOPPED(status))
                     {
                         jobs_list[i]->status = STOPPED; // 2 for stopped

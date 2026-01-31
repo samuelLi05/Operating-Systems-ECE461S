@@ -92,7 +92,6 @@ int main(void)
             free(read_string);
             free(saved_string);
             free(parsed_input);
-            printf("\n"); // print newline for invalid input
             continue; // empty input, prompt again
         }
         // printf("Command entered: %s\n", command); // test simple parsing
